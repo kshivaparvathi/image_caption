@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: image-caption-ai
+    env: docker
+    region: oregon
+    plan: free
+    branch: main
