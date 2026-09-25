@@ -23,8 +23,8 @@ class Settings(BaseModel):
     tts_cache_dir: Path = BASE_DIR / "cache" / "tts"
     
     # Host & Port
-    host: str = "0.0.0.0"
-    port: int = 8000
+    host: str = os.environ.get("HOST", "0.0.0.0")
+    port: int = int(os.environ.get("PORT", 8000))
 
 settings = Settings()
 settings.tts_cache_dir.mkdir(parents=True, exist_ok=True)

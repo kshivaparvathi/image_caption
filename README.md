@@ -1,3 +1,13 @@
+---
+title: Image Caption AI
+emoji: 🖼️
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Image Caption AI
 
 > **Turn your images into meaningful captions.**  
