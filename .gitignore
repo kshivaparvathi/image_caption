@@ -44,3 +44,7 @@ desktop.ini
 uploads/
 temp/
 tmp/
+
+# Binaries
+*.exe
+cloudflared.exe
