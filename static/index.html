@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Caption AI - Turn Images into Meaningful Captions</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: ['class', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="bg-[#0b0f19] text-gray-100 min-h-screen flex flex-col font-sans selection:bg-indigo-600 selection:text-white">
+
+  <!-- ================= GLOBAL NAVBAR ================= -->
+  <header class="border-b border-gray-800/80 bg-[#111827]/80 backdrop-blur-md sticky top-0 z-40 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo returns to Home -->
+      <div class="flex items-center gap-3 cursor-pointer group" onclick="App.navigate('/')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-bold text-base tracking-tight text-white group-hover:text-indigo-300 transition">Image Caption AI</span>
+          <span class="text-[10px] text-gray-400 font-medium tracking-wide uppercase">Open-Source Multimodal</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-300">
+        <a href="/" onclick="event.preventDefault(); App.navigate('/');" class="hover:text-white transition">Home</a>
+        <a href="#platforms" onclick="event.preventDefault(); App.scrollToSection('platforms-section');" class="hover:text-white transition">Platforms</a>
+        <a href="#how-it-works" onclick="event.preventDefault(); App.scrollToSection('how-it-works-section');" class="hover:text-white transition">How It Works</a>
+        <a href="#about" onclick="event.preventDefault(); App.scrollToSection('about-section');" class="hover:text-white transition">About</a>
+      </nav>
+
+      <!-- Action items -->
+      <div class="flex items-center gap-3">
+        <!-- Theme Toggle -->
+        <button id="theme-btn" onclick="App.toggleTheme()" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-700 bg-gray-800/80 text-gray-300 hover:bg-gray-700 transition" title="Toggle theme">
+          ☀️ Light
+        </button>
+
+        <!-- Direct CTA -->
+        <button onclick="App.navigate('/instagram')" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition">
+          <span>Start Creating</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= ERROR ALERT TOAST ================= -->
+  <div id="error-box" class="max-w-4xl mx-auto px-4 mt-4 w-full hidden">
+    <div class="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between shadow-lg">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span id="error-message">An unexpected issue occurred.</span>
+      </div>
+      <button onclick="App.clearError()" class="text-rose-400 hover:text-white font-bold text-sm px-2">✕</button>
+    </div>
+  </div>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="flex-grow w-full">
+
+    <!-- ============================================================== -->
+    <!-- VIEW 1: HOME PAGE (Landing, Choose Platform, How It Works, About) -->
+    <!-- ============================================================== -->
+    <div id="home-view" class="w-full">
+      
+      <!-- HERO SECTION -->
+      <section class="relative pt-16 pb-20 md:pt-24 md:pb-28 overflow-hidden">
+        <!-- Background subtle glow -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-indigo-500/15 to-violet-500/15 blur-[120px] pointer-events-none rounded-full"></div>
+
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 text-center relative z-10">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 mb-6 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+            <span>Open-Source Multimodal Vision AI</span>
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white mb-5 leading-tight">
+            Image Caption AI
+          </h1>
+
+          <p class="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-indigo-300 via-white to-violet-300 bg-clip-text text-transparent mb-6">
+            Turn your images into meaningful captions.
+          </p>
+
+          <p class="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Upload any image, choose your target platform and language, and let deep learning understand the visual context to generate tailored, authentic captions in seconds.
+          </p>
+
+          <div class="flex flex-wrap items-center justify-center gap-4">
+            <button onclick="App.scrollToSection('platforms-section')" class="px-6 py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2">
+              <span>Choose What to Create</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <button onclick="App.navigate('/instagram')" class="px-6 py-3.5 rounded-xl font-semibold text-sm bg-gray-800/80 hover:bg-gray-700 text-gray-200 border border-gray-700 transition">
+              Try Instagram Generator
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHOOSE WHAT YOU WANT TO CREATE (6 PLATFORM CARDS) -->
+      <section id="platforms-section" class="py-16 bg-gray-950/40 border-y border-gray-800/50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+          <div class="text-center max-w-2xl mx-auto mb-12">
+            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-3">
+              Choose what you want to create
+            </h2>
+            <p class="text-xs sm:text-sm text-gray-400">
+              Select a specialized platform format. Our AI model tailors the tone, formatting, and length for maximum audience resonance.
+            </p>
+          </div>
+
+          <!-- 6 Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- 1. Instagram Caption -->
+            <div onclick="App.navigate('/instagram')" class="glass-panel p-6 rounded-2xl glow-card cursor-pointer border border-gray-800 flex flex-col justify-between group">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center mb-4 shadow-md group-hover:scale-105 transition">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">Instagram Caption</h3>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-medium">Reels & Feed</span>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed mb-6">
+                  Generate aesthetic, engaging captions with storytelling hooks, tasteful line breaks, and viral hashtags.
+                </p>
+              </div>
+              <div class="flex items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 gap-1.5 pt-3 border-t border-gray-800/80">
+                <span>Create Caption</span>
+                <svg class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </div>
+            </div>
+
+            <!-- 2. X / Twitter Post -->
+            <div onclick="App.navigate('/twitter')" class="glass-panel p-6 rounded-2xl glow-card cursor-pointer border border-gray-800 flex flex-col justify-between group">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-gray-900 border border-gray-700 text-white flex items-center justify-center mb-4 shadow-md group-hover:scale-105 transition">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">X / Twitter Post</h3>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20 font-medium">Under 280 chars</span>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed mb-6">
+                  Concise, punchy posts optimized for high engagement, conversation starters, and trending discussions.
+                </p>
+              </div>
+              <div class="flex items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 gap-1.5 pt-3 border-t border-gray-800/80">
+                <span>Create Post</span>
+                <svg class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </div>
+            </div>
+
+            <!-- 3. LinkedIn Post -->
+            <div onclick="App.navigate('/linkedin')" class="glass-panel p-6 rounded-2xl glow-card cursor-pointer border border-gray-800 flex flex-col justify-between group">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mb-4 shadow-md group-hover:scale-105 transition">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">LinkedIn Post</h3>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-medium">Professional</span>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed mb-6">
+                  Professional commentary, thoughtful takeaways, and industry-tailored framing suitable for network growth.
+                </p>
+              </div>
+              <div class="flex items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 gap-1.5 pt-3 border-t border-gray-800/80">
+                <span>Create Post</span>
+                <svg class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </div>
+            </div>
+
+            <!-- 4. Facebook Caption -->
+            <div onclick="App.navigate('/facebook')" class="glass-panel p-6 rounded-2xl glow-card cursor-pointer border border-gray-800 flex flex-col justify-between group">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-blue-700 text-white flex items-center justify-center mb-4 shadow-md group-hover:scale-105 transition">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">Facebook Caption</h3>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20 font-medium">Community</span>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed mb-6">
+                  Warm, relatable, and conversational storytelling with questions that invite friends and community comments.
+                </p>
+              </div>
+              <div class="flex items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 gap-1.5 pt-3 border-t border-gray-800/80">
+                <span>Create Caption</span>
+                <svg class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </div>
+            </div>
+
+            <!-- 5. WhatsApp Status -->
+            <div onclick="App.navigate('/whatsapp')" class="glass-panel p-6 rounded-2xl glow-card cursor-pointer border border-gray-800 flex flex-col justify-between group">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center mb-4 shadow-md group-hover:scale-105 transition">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">WhatsApp Status</h3>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">Status Story</span>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed mb-6">
+                  Short, expressive status lines and mood quotes perfect for 24-hour stories and personal updates.
+                </p>
+              </div>
+              <div class="flex items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 gap-1.5 pt-3 border-t border-gray-800/80">
+                <span>Create Status</span>
+                <svg class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </div>
+            </div>
+
+            <!-- 6. General Image Caption -->
+            <div onclick="App.navigate('/caption')" class="glass-panel p-6 rounded-2xl glow-card cursor-pointer border border-gray-800 flex flex-col justify-between group">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center mb-4 shadow-md group-hover:scale-105 transition">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">General Image Caption</h3>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">Natural</span>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed mb-6">
+                  Natural, descriptive image summary capturing subjects, surroundings, activities, and composition.
+                </p>
+              </div>
+              <div class="flex items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 gap-1.5 pt-3 border-t border-gray-800/80">
+                <span>Generate Caption</span>
+                <svg class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS SECTION -->
+      <section id="how-it-works-section" class="py-20 max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="text-center max-w-2xl mx-auto mb-14">
+          <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest">Workflow</span>
+          <h2 class="text-3xl font-bold tracking-tight text-white mt-1 mb-3">How It Works</h2>
+          <p class="text-xs sm:text-sm text-gray-400">
+            From raw pixels to polished platform captions in five intuitive steps.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <!-- Step 1 -->
+          <div class="p-5 rounded-2xl bg-gray-900/60 border border-gray-800 flex flex-col items-center text-center">
+            <div class="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 font-bold text-sm flex items-center justify-center mb-3">1</div>
+            <h4 class="text-sm font-bold text-white mb-1">Upload</h4>
+            <p class="text-xs text-gray-400">Select or drop an image in JPG, PNG, or WEBP.</p>
+          </div>
+          <!-- Step 2 -->
+          <div class="p-5 rounded-2xl bg-gray-900/60 border border-gray-800 flex flex-col items-center text-center">
+            <div class="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 font-bold text-sm flex items-center justify-center mb-3">2</div>
+            <h4 class="text-sm font-bold text-white mb-1">Choose</h4>
+            <p class="text-xs text-gray-400">Pick your platform and target language.</p>
+          </div>
+          <!-- Step 3 -->
+          <div class="p-5 rounded-2xl bg-gray-900/60 border border-gray-800 flex flex-col items-center text-center">
+            <div class="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 font-bold text-sm flex items-center justify-center mb-3">3</div>
+            <h4 class="text-sm font-bold text-white mb-1">Customize</h4>
+            <p class="text-xs text-gray-400">Add instructions via text or voice microphone.</p>
+          </div>
+          <!-- Step 4 -->
+          <div class="p-5 rounded-2xl bg-gray-900/60 border border-gray-800 flex flex-col items-center text-center">
+            <div class="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 font-bold text-sm flex items-center justify-center mb-3">4</div>
+            <h4 class="text-sm font-bold text-white mb-1">Generate</h4>
+            <p class="text-xs text-gray-400">BLIP AI extracts scene context and formats.</p>
+          </div>
+          <!-- Step 5 -->
+          <div class="p-5 rounded-2xl bg-gray-900/60 border border-gray-800 flex flex-col items-center text-center">
+            <div class="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 font-bold text-sm flex items-center justify-center mb-3">5</div>
+            <h4 class="text-sm font-bold text-white mb-1">Use</h4>
+            <p class="text-xs text-gray-400">Edit, copy, regenerate, or read aloud with voice.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT SECTION -->
+      <section id="about-section" class="py-16 bg-gray-950/60 border-t border-gray-800">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6">
+          <div class="glass-panel p-8 sm:p-10 rounded-3xl border border-gray-800">
+            <h3 class="text-2xl font-bold text-white mb-4">About Image Caption AI</h3>
+            <p class="text-sm text-gray-300 leading-relaxed mb-4">
+              Image Caption AI is built using authentic open-source multimodal neural models (Salesforce BLIP and BLIP VQA).
+              It directly scans pixel structures to detect living subjects, environments, activities, and lighting nuances.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-gray-800/80 text-xs text-gray-400">
+              <div>
+                <span class="font-bold text-white block mb-1">🔒 Complete Privacy</span>
+                Runs on open-source deep learning without external cloud vision dependencies.
+              </div>
+              <div>
+                <span class="font-bold text-white block mb-1">🌐 Authentic Indian & Global Languages</span>
+                Generates captions natively in Telugu, Hindi, Tamil, Kannada, Malayalam, Bengali, Marathi, and more.
+              </div>
+              <div>
+                <span class="font-bold text-white block mb-1">🎙️ Interactive Speech</span>
+                Integrated browser voice recognition and text-to-speech with full Play, Pause, and Stop controls.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- VIEW 2: PLATFORM GENERATOR PAGE (Upload, Customization, Result) -->
+    <!-- ============================================================== -->
+    <div id="generator-view" class="max-w-5xl mx-auto px-4 sm:px-6 py-8 hidden">
+      
+      <!-- Back to Platforms & Header -->
+      <div class="mb-8">
+        <button onclick="App.navigate('/')" class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-white transition mb-4 group">
+          <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          <span>Back to Platforms</span>
+        </button>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-800">
+          <div class="flex items-center gap-3.5">
+            <div id="platform-icon-container" class="w-12 h-12 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30 shadow-md">
+              <!-- Dynamically populated icon -->
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-0.5">
+                <h1 id="platform-title" class="text-2xl font-bold tracking-tight text-white">Instagram Caption Generator</h1>
+                <span id="platform-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold">Social</span>
+              </div>
+              <p id="platform-tagline" class="text-xs text-gray-400">Aesthetic, engaging captions with catchy hooks and viral hashtags.</p>
+            </div>
+          </div>
+
+          <!-- Quick Switcher Pills -->
+          <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+            <button onclick="App.navigate('/instagram')" data-platform="instagram" class="platform-pill text-xs px-2.5 py-1.5 rounded-lg border border-gray-700 bg-gray-800/80 text-gray-300 hover:text-white transition">Instagram</button>
+            <button onclick="App.navigate('/twitter')" data-platform="twitter" class="platform-pill text-xs px-2.5 py-1.5 rounded-lg border border-gray-700 bg-gray-800/80 text-gray-300 hover:text-white transition">X/Twitter</button>
+            <button onclick="App.navigate('/linkedin')" data-platform="linkedin" class="platform-pill text-xs px-2.5 py-1.5 rounded-lg border border-gray-700 bg-gray-800/80 text-gray-300 hover:text-white transition">LinkedIn</button>
+            <button onclick="App.navigate('/facebook')" data-platform="facebook" class="platform-pill text-xs px-2.5 py-1.5 rounded-lg border border-gray-700 bg-gray-800/80 text-gray-300 hover:text-white transition">Facebook</button>
+            <button onclick="App.navigate('/whatsapp')" data-platform="whatsapp" class="platform-pill text-xs px-2.5 py-1.5 rounded-lg border border-gray-700 bg-gray-800/80 text-gray-300 hover:text-white transition">WhatsApp</button>
+            <button onclick="App.navigate('/caption')" data-platform="caption" class="platform-pill text-xs px-2.5 py-1.5 rounded-lg border border-gray-700 bg-gray-800/80 text-gray-300 hover:text-white transition">General</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Workflow Grid: Left Upload, Right Controls -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start mb-10">
+
+        <!-- LEFT COLUMN: Image Upload / Preview (5 cols) -->
+        <div class="md:col-span-5 flex flex-col gap-4">
+          
+          <!-- Dropzone Card -->
+          <div id="dropzone-container" class="w-full">
+            <div id="dropzone" class="w-full p-8 rounded-2xl border-2 border-dashed border-gray-700 hover:border-indigo-500 bg-gray-900/40 hover:bg-gray-900/70 cursor-pointer transition flex flex-col items-center justify-center min-h-[260px] text-center" onclick="document.getElementById('file-input').click()">
+              <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg, image/webp" class="hidden">
+              
+              <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+
+              <p class="text-sm font-semibold text-white mb-1">
+                Drop your image here, or <span class="text-indigo-400 underline">browse</span>
+              </p>
+              <p class="text-[11px] text-gray-500">Supports JPG, PNG, WEBP (Max 15MB)</p>
+            </div>
+
+            <!-- Quick Samples -->
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-gray-400">
+              <span class="text-[11px] text-gray-500">Or try a sample:</span>
+              <button onclick="App.loadSample('street_market', '/static/samples/street_market.jpg')" class="px-2.5 py-1 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700/60 transition text-[11px]">
+                Market
+              </button>
+              <button onclick="App.loadSample('tech_collaboration', '/static/samples/tech_collaboration.jpg')" class="px-2.5 py-1 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700/60 transition text-[11px]">
+                Workspace
+              </button>
+              <button onclick="App.loadSample('nature_wildlife', '/static/samples/nature_wildlife.jpg')" class="px-2.5 py-1 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700/60 transition text-[11px]">
+                Mountains
+              </button>
+              <button onclick="App.loadSample('classroom_lecture', '/static/samples/classroom_lecture.jpg')" class="px-2.5 py-1 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700/60 transition text-[11px]">
+                Classroom
+              </button>
+            </div>
+          </div>
+
+          <!-- Selected Preview Card (Shown after image chosen) -->
+          <div id="preview-container" class="w-full hidden">
+            <div class="rounded-2xl overflow-hidden bg-black/60 border border-gray-700 shadow-xl max-h-72 flex items-center justify-center relative group">
+              <img id="preview-img" src="" alt="Selected Preview" class="w-full h-auto max-h-72 object-contain">
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                <button onclick="document.getElementById('file-input').click()" class="px-3 py-1.5 rounded-lg bg-white/90 text-gray-900 text-xs font-semibold hover:bg-white shadow">
+                  Change
+                </button>
+                <button onclick="App.removeImage()" class="px-3 py-1.5 rounded-lg bg-rose-600/90 text-white text-xs font-semibold hover:bg-rose-600 shadow">
+                  Remove
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-xs text-gray-400 px-1">
+              <span class="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                Image selected
+              </span>
+              <button onclick="App.removeImage()" class="hover:text-rose-400 transition">Remove image</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Language, Instructions, Generate CTA (7 cols) -->
+        <div class="md:col-span-7 flex flex-col gap-6 glass-panel p-6 sm:p-7 rounded-2xl border border-gray-800">
+          
+          <!-- Language Selector Dropdown -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">
+              Select Language
+            </label>
+            <div class="relative">
+              <select id="lang-select" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition cursor-pointer appearance-none">
+                <!-- Dynamically loaded with Telugu, Hindi, Tamil, Kannada, Malayalam, Bengali, Marathi, English at top -->
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+            </div>
+            <p class="text-[11px] text-gray-500 mt-1">The caption will be generated natively in the chosen language.</p>
+          </div>
+
+          <!-- Optional User Instruction (Text or Voice) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                Custom Instruction (Optional)
+              </label>
+              <span class="text-[11px] text-gray-500">Text or Voice</span>
+            </div>
+
+            <div class="relative flex items-center">
+              <input type="text" id="instruction-input" placeholder="e.g. Make it funny, keep it short, add hashtags..." class="w-full bg-gray-900 border border-gray-700 rounded-xl pl-3.5 pr-12 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition">
+              
+              <!-- Microphone Button -->
+              <button id="btn-mic" onclick="App.toggleVoiceRecognition()" class="absolute right-1.5 p-2 rounded-lg bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition" title="Speak instruction with voice">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Quick Suggestion Chips -->
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              <button onclick="App.applyChip('Make it funny')" class="px-2.5 py-1 rounded-lg text-xs bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
+                Make it funny
+              </button>
+              <button onclick="App.applyChip('Keep it short')" class="px-2.5 py-1 rounded-lg text-xs bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
+                Keep it short
+              </button>
+              <button onclick="App.applyChip('Make it professional')" class="px-2.5 py-1 rounded-lg text-xs bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
+                Make it professional
+              </button>
+              <button onclick="App.applyChip('Add relevant hashtags')" class="px-2.5 py-1 rounded-lg text-xs bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
+                Add relevant hashtags
+              </button>
+              <button onclick="App.applyChip('Make it emotional')" class="px-2.5 py-1 rounded-lg text-xs bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
+                Make it emotional
+              </button>
+            </div>
+          </div>
+
+          <!-- PRIMARY ACTION: GENERATE CAPTION -->
+          <div>
+            <button id="btn-generate" onclick="App.generateCaption(false)" class="w-full py-3.5 px-6 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 group">
+              <svg class="w-4 h-4 text-indigo-200 group-hover:rotate-12 transition transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              <span>Generate Caption</span>
+            </button>
+            <p class="text-center text-[11px] text-gray-500 mt-2">Analysis is generated exclusively from the actual image contents.</p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- PROCESSING STATE SECTION -->
+      <div id="processing-state" class="glass-panel p-8 rounded-2xl border border-indigo-500/30 text-center my-8 hidden">
+        <div class="w-10 h-10 rounded-full border-3 border-indigo-500 border-t-transparent animate-spin mx-auto mb-4"></div>
+        <h3 class="text-base font-bold text-white mb-1">Analyzing image contents...</h3>
+        <p class="text-xs text-indigo-300 animate-pulse">Running BLIP neural visual understanding and formatting platform caption...</p>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- RESULT SECTION: Generated Caption, Hashtags, Actions, Read Aloud -->
+      <!-- ============================================================== -->
+      <div id="result-section" class="w-full hidden">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          
+          <!-- Left: Image Preview (4 cols) -->
+          <div class="md:col-span-4 flex flex-col gap-3">
+            <div class="rounded-2xl overflow-hidden border border-gray-800 bg-black/60 shadow-xl">
+              <img id="res-img" src="" alt="Analyzed Result" class="w-full h-auto max-h-72 object-contain">
+            </div>
+
+            <button onclick="App.removeImage()" class="text-xs text-gray-400 hover:text-white transition py-1 text-center flex items-center justify-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <span>Upload a different image</span>
+            </button>
+          </div>
+
+          <!-- Right: Generated Caption & Hashtags Card (8 cols) -->
+          <div class="md:col-span-8 flex flex-col gap-5 glass-panel p-6 sm:p-7 rounded-2xl border border-gray-800">
+            
+            <!-- Result Badges & Action Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-800">
+              <div class="flex flex-wrap items-center gap-2">
+                <span id="res-platform-badge" class="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs font-semibold flex items-center">
+                  Instagram
+                </span>
+                <span id="res-lang-badge" class="px-2.5 py-1 rounded-lg bg-gray-800 text-gray-300 border border-gray-700 text-xs font-medium">
+                  Telugu (తెలుగు)
+                </span>
+              </div>
+
+              <!-- Required Actions: Copy, Edit, Regenerate -->
+              <div class="flex items-center gap-2">
+                <button id="btn-edit" onclick="App.toggleEditCaption()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:text-white bg-gray-800/80 hover:bg-gray-700 border border-gray-700 transition flex items-center gap-1.5" title="Edit caption">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                  <span>Edit</span>
+                </button>
+
+                <button id="btn-copy" onclick="App.copyCaption()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition flex items-center gap-1.5 shadow-sm" title="Copy caption">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                  <span>Copy</span>
+                </button>
+
+                <button id="btn-regenerate" onclick="App.regenerateCaption()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:text-white bg-gray-800/80 hover:bg-gray-700 border border-gray-700 transition flex items-center gap-1.5" title="Regenerate another caption">
+                  <svg class="w-3.5 h-3.5 regen-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                  <span>Regenerate</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- SECTION 1: Generated Caption -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Generated Caption</span>
+                </h3>
+                <div class="flex items-center gap-2 text-[11px] text-gray-500">
+                  <span id="char-count">0 chars</span>
+                  <span>•</span>
+                  <span id="word-count">0 words</span>
+                </div>
+              </div>
+
+              <!-- Editable Caption Textarea -->
+              <textarea id="caption-editor" readonly class="w-full bg-black/40 border border-gray-800 rounded-xl p-4 text-base sm:text-lg font-medium text-white leading-relaxed focus:outline-none transition resize-none min-h-[120px]"></textarea>
+            </div>
+
+            <!-- SECTION 2: 4 Alternative Captions (Dynamically generated from image) -->
+            <div id="alternatives-container" class="border-t border-gray-800/80 pt-4 hidden">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                  <span>Alternative Captions (4 Options)</span>
+                </h3>
+                <span class="text-[11px] text-gray-500">Click "Use as Main" to swap into editor</span>
+              </div>
+              <div id="alternatives-list" class="flex flex-col gap-2.5">
+                <!-- Dynamically populated with 4 alternatives -->
+              </div>
+            </div>
+
+            <!-- SECTION 3: Hashtags (Separately displayed, only relevant) -->
+            <div id="hashtags-container" class="hidden">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Hashtags</span>
+                </h3>
+                <button id="btn-copy-hashtags" onclick="App.copyHashtags()" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium transition flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                  <span>Copy Tags</span>
+                </button>
+              </div>
+
+              <div id="hashtags-display" class="flex flex-wrap gap-1.5 p-3 rounded-xl bg-black/30 border border-gray-800/80">
+                <!-- Dynamically populated with relevant hashtags only -->
+              </div>
+            </div>
+
+            <!-- SECTION 3: TEXT-TO-SPEECH READ ALOUD BAR (Play, Pause, Resume, Stop) -->
+            <div class="p-3.5 rounded-xl bg-gray-950/60 border border-gray-800/80 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                  <span>Read Aloud:</span>
+                </span>
+
+                <!-- Play Button -->
+                <button id="btn-tts-play" onclick="App.playSpeech()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1 shadow">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <span>Play</span>
+                </button>
+
+                <!-- Pause Button (Hidden by default) -->
+                <button id="btn-tts-pause" onclick="App.pauseSpeech()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white transition hidden flex items-center gap-1 shadow">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  <span>Pause</span>
+                </button>
+
+                <!-- Resume Button (Hidden by default) -->
+                <button id="btn-tts-resume" onclick="App.resumeSpeech()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition hidden flex items-center gap-1 shadow">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <span>Resume</span>
+                </button>
+
+                <!-- Stop Button (Hidden when stopped) -->
+                <button id="btn-tts-stop" onclick="App.stopSpeech()" class="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition hidden" title="Stop">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                </button>
+              </div>
+
+              <!-- Animated Wave Visualizer -->
+              <div class="flex items-center h-4 px-2">
+                <span class="audio-bar"></span>
+                <span class="audio-bar"></span>
+                <span class="audio-bar"></span>
+                <span class="audio-bar"></span>
+                <span class="audio-bar"></span>
+                <span class="audio-bar"></span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="border-t border-gray-800/60 py-6 text-center text-xs text-gray-500 bg-gray-950/60 mt-auto">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-gray-300">Image Caption AI</span>
+        <span>•</span>
+        <span>Open-Source BLIP Deep Vision Stack</span>
+      </div>
+      <div class="flex items-center gap-4 text-gray-400">
+        <a href="#how-it-works" onclick="event.preventDefault(); App.scrollToSection('how-it-works-section');" class="hover:text-white transition">How It Works</a>
+        <a href="#about" onclick="event.preventDefault(); App.scrollToSection('about-section');" class="hover:text-white transition">About</a>
+        <a href="/instagram" onclick="event.preventDefault(); App.navigate('/instagram');" class="hover:text-white transition">Create</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

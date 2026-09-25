@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Caches & temporary files
+.cache/
+cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Environments
+.env
+.env.*
+!.env.example
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Hugging Face & Model checkpoints
+checkpoints/
+*.bin
+*.pt
+*.safetensors
+hf_cache/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary uploads
+uploads/
+temp/
+tmp/
