@@ -4,6 +4,7 @@ Configuration and Environment Settings for Image Caption AI.
 No external Gemini or third-party Vision API dependencies.
 """
 
+import os
 from pathlib import Path
 from pydantic import BaseModel
 from typing import List
